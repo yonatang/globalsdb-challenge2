@@ -1,0 +1,70 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>me.yonatan.globals</groupId>
+	<artifactId>c2</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<tomcat.version>7.0.23</tomcat.version>
+		<jrebel.version>1.0.8</jrebel.version>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<artifactId>tomcat-catalina</artifactId>
+				<groupId>org.apache.tomcat</groupId>
+				<version>${tomcat.version}</version>
+			</dependency>
+			<dependency>
+				<artifactId>tomcat-jasper</artifactId>
+				<groupId>org.apache.tomcat</groupId>
+				<version>${tomcat.version}</version>
+			</dependency>
+
+			<dependency>
+				<artifactId>tomcat-embed-core</artifactId>
+				<groupId>org.apache.tomcat.embed</groupId>
+				<version>${tomcat.version}</version>
+			</dependency>
+
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.zeroturnaround</groupId>
+					<artifactId>jrebel-maven-plugin</artifactId>
+					<version>${jrebel.version}</version>
+					<executions>
+						<execution>
+							<id>generate-rebel-xml</id>
+							<phase>process-resources</phase>
+							<goals>
+								<goal>generate</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+		<plugins>
+			<plugin>
+				<groupId>org.zeroturnaround</groupId>
+				<artifactId>jrebel-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+	<modules>
+		<module>war</module>
+		<module>runner</module>
+	</modules>
+
+
+
+</project>
