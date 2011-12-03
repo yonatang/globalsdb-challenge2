@@ -39,6 +39,8 @@ public class Main {
 		
 		Tomcat tomcat = new Tomcat();
 
+		final int port=2000+(int)(Math.random()*(65500-2000));
+		
 		File tempWar = File.createTempFile("war", ".war");
 		InputStream warInputStream = ClassLoader.getSystemResourceAsStream("war.war");
 		IOUtils.copy(warInputStream, new FileOutputStream(tempWar));
@@ -51,7 +53,7 @@ public class Main {
 		String appBase = FilenameUtils.getName(tempWarName);
 		String baseDir = FilenameUtils.getFullPath(tempWarName);
 
-		tomcat.setPort(8081);
+		tomcat.setPort(port);
 		MemoryRealm r = new MemoryRealm();
 		r.setPathname(tempUsers.getAbsolutePath());
 		tomcat.setDefaultRealm(r);
@@ -68,7 +70,7 @@ public class Main {
 		Server server = tomcat.getServer();
 		AprLifecycleListener listener = new AprLifecycleListener();
 		server.addLifecycleListener(listener);
-		String contextPath = "/";
+		String contextPath = "/app";
 		host.setAppBase("");
 		try {
 			tomcat.addWebapp(contextPath, appBase);
@@ -80,7 +82,7 @@ public class Main {
 				public void run() {
 					JFrame frame = new JFrame("DJ Native Swing Test");
 					frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-					frame.getContentPane().add(new Window("http://localhost:8081/hi.jsf"), BorderLayout.CENTER);
+					frame.getContentPane().add(new Window("http://localhost:"+port+"/app/viewer.jsf"), BorderLayout.CENTER);
 					frame.setSize(800, 600);
 					frame.setLocationByPlatform(true);
 					frame.setVisible(true);

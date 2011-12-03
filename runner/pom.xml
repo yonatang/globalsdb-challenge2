@@ -23,6 +23,7 @@
 			<type>war</type>
 			<scope>runtime</scope>
 		</dependency>
+
 		<dependency>
 			<artifactId>tomcat-catalina</artifactId>
 			<groupId>org.apache.tomcat</groupId>
@@ -31,39 +32,36 @@
 			<artifactId>tomcat-jasper</artifactId>
 			<groupId>org.apache.tomcat</groupId>
 		</dependency>
-
 		<dependency>
 			<artifactId>tomcat-embed-core</artifactId>
 			<groupId>org.apache.tomcat.embed</groupId>
 		</dependency>
 		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>jstl</artifactId>
+			<version>1.2</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
-			<version>3.1</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
-			<version>2.1</version>
 		</dependency>
 
 		<dependency>
 			<groupId>dj</groupId>
 			<artifactId>DJNAtiveSwing-SWTCore</artifactId>
-			<version>1.0</version>
-			<type>jar</type>
 		</dependency>
 		<dependency>
 			<groupId>dj</groupId>
 			<artifactId>DJNAtiveSwing-SWT</artifactId>
-			<version>1.0</version>
-			<type>jar</type>
 		</dependency>
 		<dependency>
 			<groupId>dj</groupId>
 			<artifactId>DJNativeSwing-SWTAPI</artifactId>
-			<version>1.0</version>
-			<type>jar</type>
 		</dependency>
 	</dependencies>
 
@@ -102,10 +100,5 @@
 			<!-- </plugin> -->
 		</plugins>
 	</build>
-	<repositories>
-		<repository>
-			<id>dj</id>
-			<url>https://github.com/lacevedo/DJ-Maven-Project/raw/master/maven_repository</url>
-		</repository>
-	</repositories>
+
 </project>
