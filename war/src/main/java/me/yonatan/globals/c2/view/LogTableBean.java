@@ -24,6 +24,10 @@ public class LogTableBean implements Serializable {
 	@Inject
 	private DbManager dbManager;
 
+	@Inject
+	@Getter
+	private LogTableDataModel dataModel;
+	
 	@Getter
 	private LogFile logFile;
 
@@ -34,9 +38,7 @@ public class LogTableBean implements Serializable {
 		this.logFile = logFile;
 	}
 
-	@Inject
-	@Getter
-	private LogTableDataModel dataModel;
+
 
 	public void populate() {
 	}
@@ -48,7 +50,7 @@ public class LogTableBean implements Serializable {
 			System.out.println("File has changed. Reloading.");
 			dbManager.reloadFile(logFile);
 			setLogFile(dbManager.getFileInfo(logFile.getHandler()));
-			
+
 		}
 	}
 

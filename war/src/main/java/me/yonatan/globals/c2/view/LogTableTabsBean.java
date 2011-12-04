@@ -7,7 +7,10 @@ import java.util.HashMap;
 import java.util.List;
 
 import javax.enterprise.context.SessionScoped;
+import javax.inject.Inject;
 import javax.inject.Named;
+
+import me.yonatan.globals.c2.action.DbManager;
 
 import org.primefaces.event.TabCloseEvent;
 
@@ -25,6 +28,9 @@ public class LogTableTabsBean implements Serializable {
 	public List<LogTableBean> getTabs() {
 		return unmodifableTabs;
 	}
+
+	@Inject
+	private DbManager dbManager;
 
 	public void addTab(LogTableBean ltb) {
 		if (tabSet == null)
@@ -44,6 +50,7 @@ public class LogTableTabsBean implements Serializable {
 			tabs.remove(ltb);
 			if (ltb.getLogFile() != null && ltb.getLogFile().getHandler() != null) {
 				tabSet.remove(ltb.getLogFile().getHandler());
+				dbManager.removeLogfile(ltb.getLogFile().getHandler());
 			}
 		}
 

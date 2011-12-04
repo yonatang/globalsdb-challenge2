@@ -21,6 +21,7 @@ import me.yonatan.globals.c2.parser.LogParser;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.jboss.logging.Logger;
 import org.joda.time.DateTime;
 
@@ -104,11 +105,15 @@ public class DbManager {
 						String json = gson.toJson(lr);
 						nr.set(json, LOGS, id);
 
-						// index by ip
+						// indices
 						// TODO hanlde missing ip?
+						long timestamp = lr.getTimestamp().getMillis();
 						if (StringUtils.isNotBlank(lr.getIp())) {
 							nr.set(id, "i_ip", "~" + lr.getIp(), id);
+							nr.set(id, "i_timestamp_ip", timestamp, "~" + lr.getIp(), id);
 						}
+						nr.set(id, "i_timestamp", timestamp, id);
+
 					}
 					updated = true;
 				}
@@ -121,7 +126,12 @@ public class DbManager {
 			log.errorv(e, "Can't load data");
 			connection.rollback();
 		}
+	}
 
+	public void removeLogfile(String handler) {
+		@Cleanup
+		NodeReference nr = connection.createNodeReference(handler);
+		nr.kill();
 	}
 
 	public List<LogRecord> getRecords(String handler) {
@@ -164,13 +174,22 @@ public class DbManager {
 		return records;
 	}
 
+	/**
+	 * Filter by IP (starts with)
+	 * 
+	 * @param handler
+	 * @param from
+	 * @param count
+	 * @param ip
+	 * @return
+	 */
 	public Records getRecords(String handler, int from, int count, String ip) {
 
 		@Cleanup
 		NodeReference nr = connection.createNodeReference(handler);
 		String modifiedIp = "~" + ip;
 		String nextIp = null;
-		
+
 		if (nr.hasSubnodes("i_ip", modifiedIp)) {
 			nextIp = modifiedIp;
 		} else {
@@ -190,6 +209,110 @@ public class DbManager {
 				nextId = nr.nextSubscript("i_ip", nextIp, nextId);
 			}
 			nextIp = nr.nextSubscript("i_ip", nextIp);
+		}
+
+		Records records = new Records();
+		records.setFrom(from);
+		records.setPage(count);
+		records.setRecords(recordList);
+		records.setTotalResults(recordCount);
+		return records;
+
+	}
+
+	/**
+	 * Filter by timestamp (between range)
+	 * 
+	 * @param handler
+	 * @param from
+	 * @param count
+	 * @param fromDate
+	 * @param toDate
+	 * @return
+	 */
+	public Records getRecords(String handler, int from, int count, long fromDate, long toDate) {
+
+		@Cleanup
+		NodeReference nr = connection.createNodeReference(handler);
+		String nextTimestamp = null;
+
+		if (nr.hasSubnodes("i_timestamp", fromDate)) {
+			nextTimestamp = String.valueOf(fromDate);
+		} else {
+			nextTimestamp = nr.nextSubscript("i_timestamp", fromDate);
+		}
+		int recordCount = 0;
+
+		ArrayList<LogRecord> recordList = new ArrayList<LogRecord>();
+		while (StringUtils.isNotEmpty(nextTimestamp) && NumberUtils.toLong(nextTimestamp) < toDate) {
+			String nextId = nr.nextSubscript("i_timestamp", nextTimestamp, "");
+			while (StringUtils.isNotEmpty(nextId)) {
+				if (recordCount >= from && recordList.size() < count) {
+					String json = nr.getString(LOGS, nextId);
+					LogRecord lr = gson.fromJson(json, LogRecord.class);
+					recordList.add(lr);
+				}
+				recordCount++;
+				nextId = nr.nextSubscript("i_timestamp", nextTimestamp, nextId);
+			}
+			nextTimestamp = nr.nextSubscript("i_timestamp", nextTimestamp);
+		}
+
+		Records records = new Records();
+		records.setFrom(from);
+		records.setPage(count);
+		records.setRecords(recordList);
+		records.setTotalResults(recordCount);
+		return records;
+
+	}
+
+	/**
+	 * Filter records by timestamp AND ip (starts-with)
+	 * 
+	 * @param handler
+	 * @param from
+	 * @param count
+	 * @param ip
+	 * @param fromDate
+	 * @param toDate
+	 * @return
+	 */
+	public Records getRecords(String handler, int from, int count, String ip, long fromDate, long toDate) {
+
+		@Cleanup
+		NodeReference nr = connection.createNodeReference(handler);
+		String nextTimestamp = null;
+		String modifiedIp = "~" + ip;
+		String nextIp = null;
+		if (nr.hasSubnodes("i_timestamp_ip", fromDate)) {
+			nextTimestamp = String.valueOf(fromDate);
+		} else {
+			nextTimestamp = nr.nextSubscript("i_timestamp_ip", fromDate);
+		}
+		int recordCount = 0;
+
+		ArrayList<LogRecord> recordList = new ArrayList<LogRecord>();
+		while (StringUtils.isNotEmpty(nextTimestamp) && NumberUtils.toLong(nextTimestamp) < toDate) {
+			if (nr.hasSubnodes("i_timestamp_ip", nextTimestamp, modifiedIp)) {
+				nextIp = modifiedIp;
+			} else {
+				nextIp = nr.nextSubscript("i_timestamp_ip", nextTimestamp, modifiedIp);
+			}
+			while (StringUtils.isNotEmpty(nextIp) && (nextIp.startsWith(modifiedIp))) {
+				String nextId = nr.nextSubscript("i_timestamp_ip", nextTimestamp, nextIp, "");
+				while (StringUtils.isNotEmpty(nextId)) {
+					if (recordCount >= from && recordList.size() < count) {
+						String json = nr.getString(LOGS, nextId);
+						LogRecord lr = gson.fromJson(json, LogRecord.class);
+						recordList.add(lr);
+					}
+					recordCount++;
+					nextId = nr.nextSubscript("i_timestamp_ip", nextTimestamp, nextIp, nextId);
+				}
+				nextIp = nr.nextSubscript("i_timestamp_ip", nextTimestamp, nextIp);
+			}
+			nextTimestamp = nr.nextSubscript("i_timestamp_ip", nextTimestamp);
 		}
 
 		Records records = new Records();

@@ -1,15 +1,18 @@
 package me.yonatan.globals.c2.view;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
 
+import lombok.Getter;
 import lombok.Setter;
 import me.yonatan.globals.c2.action.DbManager;
 import me.yonatan.globals.c2.action.DbManager.Records;
 import me.yonatan.globals.c2.entity.LogRecord;
 
+import org.apache.commons.lang3.StringUtils;
 import org.primefaces.model.LazyDataModel;
 import org.primefaces.model.SortOrder;
 
@@ -22,15 +25,32 @@ public class LogTableDataModel extends LazyDataModel<LogRecord> {
 	@Setter
 	private String handler;
 
+	@Getter
+	@Setter
+	private Date fromDateFilter;
+
+	@Getter
+	@Setter
+	private Date toDateFilter;
+
+	@Getter
+	@Setter
+	private String ipFilter;
+
 	@Override
 	public List<LogRecord> load(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String, String> filters) {
 		System.out.println(filters);
-		// setRowCount(dbManager.getLogCountInt(handler));
 		Records records;
+		System.out.println("from date " + fromDateFilter + " to " + toDateFilter + " IP " + ipFilter);
 
-		// List<LogRecord> records;
-		if (filters.containsKey("ip")) {
-			records = dbManager.getRecords(handler, first, pageSize, filters.get("ip"));
+		if ((fromDateFilter != null || toDateFilter != null) && StringUtils.isNotBlank(ipFilter)) {
+			records = dbManager.getRecords(handler, first, pageSize, ipFilter, (fromDateFilter != null ? fromDateFilter.getTime() : 0),
+					(toDateFilter != null ? toDateFilter.getTime() : Long.MAX_VALUE));
+		} else if ((fromDateFilter == null && toDateFilter == null) && StringUtils.isNotBlank(ipFilter)) {
+			records = dbManager.getRecords(handler, first, pageSize, ipFilter);
+		} else if ((fromDateFilter != null || toDateFilter != null) && StringUtils.isBlank(ipFilter)) {
+			records = dbManager.getRecords(handler, first, pageSize, (fromDateFilter != null ? fromDateFilter.getTime() : 0),
+					(toDateFilter != null ? toDateFilter.getTime() : Long.MAX_VALUE));
 		} else {
 			records = dbManager.getRecords(handler, first, pageSize);
 		}
@@ -38,7 +58,6 @@ public class LogTableDataModel extends LazyDataModel<LogRecord> {
 		System.out.println("total results " + records.getTotalResults());
 		return records.getRecords();
 	}
-
 	// @Override
 	// public LogRecord getRowData(String rowKey) {
 	// List<LogRecord> records = dbManager.getRecords(handler);

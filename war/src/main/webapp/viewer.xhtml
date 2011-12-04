@@ -44,6 +44,39 @@
 						paginator="true"
 						paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink}"
 						rowsPerPageTemplate="10,20,50,100" resizableColumns="true">
+						<f:facet name="header">
+							<p:outputPanel>
+								<h:outputText value="From" />
+								<p:calendar id="fromDate"
+									value="#{logTable.dataModel.fromDateFilter}"
+									pattern="dd/MM/yyyy HH:mm:ss">
+									<p:ajax event="dateSelect"
+										oncomplete="logTableWidget.filter();" />
+								</p:calendar>
+								<p:commandButton image="ui-icon ui-icon-disk" update="fromDate"
+									oncomplete="logTableWidget.filter();">
+									<f:setPropertyActionListener
+										target="#{logTable.dataModel.fromDateFilter}" value="#{null}" />
+								</p:commandButton>
+								<h:outputText value="To" />
+								<p:calendar id="toDate"
+									value="#{logTable.dataModel.toDateFilter}"
+									pattern="dd/MM/yyyy HH:mm:ss">
+									<p:ajax event="dateSelect"
+										oncomplete="logTableWidget.filter();" />
+								</p:calendar>
+								<p:commandButton image="ui-icon ui-icon-disk" update="toDate"
+									oncomplete="logTableWidget.filter();">
+									<f:setPropertyActionListener
+										target="#{logTable.dataModel.toDateFilter}" value="#{null}" />
+								</p:commandButton>
+
+								<h:outputText value="IP" />
+								<p:inputText id="ip" value="#{logTable.dataModel.ipFilter}">
+									<p:ajax event="keyup" oncomplete="logTableWidget.filter();" />
+								</p:inputText>
+							</p:outputPanel>
+						</f:facet>
 						<p:column>
 							<f:facet name="header">Id</f:facet>
 							<h:outputText value="#{_record.id}" />
@@ -52,7 +85,7 @@
 							<f:facet name="header">Timestamp</f:facet>
 							<h:outputText value="#{_record.timestamp}" />
 						</p:column>
-						<p:column filterBy="#{_record.ip}">
+						<p:column>
 							<f:facet name="header">IP</f:facet>
 							<h:outputText value="#{_record.ip}" />
 						</p:column>
@@ -85,18 +118,17 @@
 				<h:outputLabel value="File location" for="fileLocation"
 					style="padding-right:10px;" />
 				<p:inputText id="fileLocation"
-					value="#{fileImportBean.localFileLocation}" style="width:300px;" widgetVar="fileLocationWidget"
-					required="true" />
+					value="#{fileImportBean.localFileLocation}" style="width:300px;"
+					widgetVar="fileLocationWidget" required="true" />
 				<h:message for="fileLocation" />
 			</h:panelGroup>
 			<h:panelGroup style="padding-top:20px;" layout="block">
-				<p:commandButton id="openButton" value="Open" 
-					ajax="false" widgetVar="openButtonWidget"
+				<p:commandButton id="openButton" value="Open" ajax="false"
+					widgetVar="openButtonWidget"
 					actionListener="#{fileImportBean.openLocal()}"
-						onclick="return startLoading();"
-				></p:commandButton>
-				<p:button id="closeButton" value="Cancel" widgetVar="closeButtonWidget"
-					onclick="localFileDialog.hide();" />
+					onclick="return startLoading();"></p:commandButton>
+				<p:button id="closeButton" value="Cancel"
+					widgetVar="closeButtonWidget" onclick="localFileDialog.hide();" />
 				<h:graphicImage value="/images/ajax-loader.gif" id="ajaxWait"
 					style="display:none; padding-left: 20px;" />
 			</h:panelGroup>
