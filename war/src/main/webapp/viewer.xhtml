@@ -29,6 +29,7 @@
 				<p:separator />
 				<p:menuitem value="Quit" />
 			</p:submenu>
+			<p:menuitem value="Help" onclick="helpDialog.show();" />
 		</p:menubar>
 	</h:form>
 	<h:form id="tabsForm">
@@ -40,13 +41,22 @@
 				<p:tab title="#{logTable.logFile.name}" closable="true">
 					<p:poll async="true" listener="#{logTable.pollForChanges}"
 						interval="10"></p:poll>
+
 					<p:hotkey bind="right"
 						handler="$(logTableWidget.getPaginator().nextLink[0]).click();"></p:hotkey>
 					<p:hotkey bind="left"
 						handler="$(logTableWidget.getPaginator().prevLink[0]).click();"></p:hotkey>
+
+					<p:contextMenu for="logTable">
+						<p:menuitem value="Filter" update="logTable"
+							actionListener="#{logTable.filterByIp}"
+							icon="ui-icon ui-icon-search" />
+					</p:contextMenu>
+
 					<p:dataTable id="logTable" value="#{logTable.dataModel}"
 						widgetVar="logTableWidget" var="_record" lazy="true" rows="10"
-						paginator="true"
+						selection="#{logTable.selectedRowRecord}" paginator="true"
+						rowKey="#{_record.id}" selectionMode="single"
 						paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink}"
 						rowsPerPageTemplate="10,20,50,100" resizableColumns="true">
 						<f:facet name="header">
@@ -66,7 +76,7 @@
 										target="#{logTable.dataModel.fromDateFilter}" value="#{null}" />
 								</p:commandButton>
 								<p:spacer width="30" />
-								
+
 								<h:outputLabel value="To" for="toDate" />
 								<p:spacer width="10" />
 								<p:calendar id="toDate"
@@ -88,6 +98,7 @@
 								<p:inputText id="ip" value="#{logTable.dataModel.ipFilter}">
 									<p:ajax event="keyup" oncomplete="logTableWidget.filter();" />
 								</p:inputText>
+
 							</p:outputPanel>
 						</f:facet>
 						<p:column>
@@ -146,8 +157,14 @@
 					style="display:none; padding-left: 20px;" />
 			</h:panelGroup>
 		</p:dialog>
-
 	</h:form>
+	<p:dialog id="helpDialog" widgetVar="helpDialog" closable="true"
+		modal="true" header="Help">
+		<li>Right click on item to filter by that IP</li>
+		<li>Use right or left keyboard keys to jump between pages</li>
+
+
+	</p:dialog>
 </h:body>
 
 </html>

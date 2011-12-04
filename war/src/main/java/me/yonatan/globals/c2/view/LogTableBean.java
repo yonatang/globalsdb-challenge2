@@ -3,16 +3,20 @@ package me.yonatan.globals.c2.view;
 import java.io.File;
 import java.io.Serializable;
 
+import javax.faces.event.ActionEvent;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.Synchronized;
 import me.yonatan.globals.c2.action.DbManager;
 import me.yonatan.globals.c2.entity.LogFile;
+import me.yonatan.globals.c2.entity.LogRecord;
 
 import org.apache.commons.io.FileUtils;
 import org.jboss.logging.Logger;
+import org.primefaces.component.menuitem.MenuItem;
 
 @SuppressWarnings("serial")
 @Named
@@ -27,6 +31,10 @@ public class LogTableBean implements Serializable {
 	@Inject
 	@Getter
 	private LogTableDataModel dataModel;
+	
+	@Getter
+	@Setter
+	private LogRecord selectedRowRecord; 
 
 	@Getter
 	private LogFile logFile;
@@ -47,6 +55,10 @@ public class LogTableBean implements Serializable {
 			setLogFile(dbManager.getFileInfo(logFile.getHandler()));
 
 		}
+	}
+	
+	public void filterByIp(ActionEvent event){
+		dataModel.setIpFilter(selectedRowRecord.getIp());
 	}
 
 }

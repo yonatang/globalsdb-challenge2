@@ -58,20 +58,23 @@ public class LogTableDataModel extends LazyDataModel<LogRecord> {
 		System.out.println("total results " + records.getTotalResults());
 		return records.getRecords();
 	}
-	// @Override
-	// public LogRecord getRowData(String rowKey) {
-	// List<LogRecord> records = dbManager.getRecords(handler);
-	// for (LogRecord car : records) {
-	// if (rowKey.equals(String.valueOf(car.getId())))
-	// return car;
-	// }
-	//
-	// return null;
-	// }
-	//
-	// @Override
-	// public Object getRowKey(LogRecord car) {
-	// System.out.println("getRowKey " + car.getId());
-	// return car.getId();
-	// }
+
+	@Override
+	public LogRecord getRowData(String rowKey) {
+		System.out.println("a");
+		List<LogRecord> records = dbManager.getRecords(handler);
+		for (LogRecord car : records) {
+			if (rowKey.equals(String.valueOf(car.getId())))
+				return car;
+		}
+
+		return null;
+	}
+
+	@Override
+	public Object getRowKey(LogRecord car) {
+		System.out.println("b");
+		System.out.println("getRowKey " + car.getId());
+		return car.getId();
+	}
 }
