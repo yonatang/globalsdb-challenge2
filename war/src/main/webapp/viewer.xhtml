@@ -12,7 +12,8 @@
 <h:head>
 </h:head>
 <h:body>
-	<h:form id="form">
+
+	<h:form id="menuForm">
 		<p:menubar>
 			<p:submenu label="File">
 				<p:submenu label="Open...">
@@ -24,18 +25,20 @@
 				<p:menuitem value="Quit" />
 			</p:submenu>
 		</p:menubar>
-
+	</h:form>
+	<h:form id="tabsForm">
 		<p:panel id="mainPanel">
 			<p:tabView id="tabs" var="logTable" value="#{logTableTabsBean.tabs}"
 				rendered="#{logTableTabsBean.tabs.size()>0}">
 				<p:ajax event="tabClose" listener="#{logTableTabsBean.onTabClose}" />
 				<p:tab title="#{logTable.logFile.name}" closable="true">
-					<p:poll async="true" listener="#{logTable.pollForChanges}" interval="10" ></p:poll>
+					<p:poll async="true" listener="#{logTable.pollForChanges}"
+						interval="10"></p:poll>
 					<p:dataTable id="logTable" value="#{logTable.dataModel}"
 						var="_record" lazy="true" rows="10" paginator="true"
 						paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink}"
 						rowsPerPageTemplate="10,20,50,100" resizableColumns="true">
-						<p:column >
+						<p:column>
 							<f:facet name="header">Id</f:facet>
 							<h:outputText value="#{_record.id}" />
 						</p:column>
@@ -56,21 +59,30 @@
 
 			</p:tabView>
 		</p:panel>
+	</h:form>
 
+	<h:form id="form">
 		<p:dialog header="Open local file" widgetVar="localFileDialog"
-			closable="false" modal="true">
-			<h:outputText value="File location" />
-			<p:inputText value="#{fileImportBean.localFileLocation}" />
-			<p:commandButton id="openButton" value="Open"
-				action="#{fileImportBean.openLocal()}"
-				onstart="$('#form\\:ajaxWait').show(); $('#form\\:openButton').button('disable'); $('#form\\:closeButton').button('disable');"
-				onsuccess="$('#form\\:ajaxWait').hide(); localFileDialog.hide();"
-				oncomplete="$('#form\\:openButton').button('enable'); $('#form\\:closeButton').button('enable');"
-				update="mainPanel" />
-			<p:button id="closeButton" value="Cancel"
-				onclick="localFileDialog.hide();" />
-			<h:outputText value="Loging. Please wait." id="ajaxWait"
-				style="display:none;" />
+			closable="false" modal="true" resizable="false">
+			<h:panelGroup layout="block">
+				<h:outputLabel value="File location" for="fileLocation"
+					style="padding-right:10px;" />
+				<p:inputText id="fileLocation"
+					value="#{fileImportBean.localFileLocation}" style="width:300px;" />
+			</h:panelGroup>
+			<h:panelGroup style="padding-top:20px;" layout="block">
+				<p:commandButton id="openButton" value="Open"
+					action="#{fileImportBean.openLocal()}"
+					onstart="$('#form\\:fileLocation').attr('disabled',true); $('#form\\:ajaxWait').show(); $('#form\\:openButton').button('disable'); $('#form\\:closeButton').button('disable');"
+					onsuccess="$('#form\\:ajaxWait').hide(); localFileDialog.hide();"
+					oncomplete="$('#form\\:fileLocation').removeAttr('disabled'); $('#form\\:openButton').button('enable'); $('#form\\:closeButton').button('enable');"
+					update="mainPanel">
+				</p:commandButton>
+				<p:button id="closeButton" value="Cancel"
+					onclick="localFileDialog.hide();" />
+				<h:graphicImage value="/images/ajax-loader.gif" id="ajaxWait"
+					style="display:none; padding-left: 20px;" />
+			</h:panelGroup>
 		</p:dialog>
 
 	</h:form>
