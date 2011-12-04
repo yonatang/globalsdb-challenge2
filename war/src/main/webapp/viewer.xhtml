@@ -38,7 +38,7 @@
 		<p:panel id="mainPanel">
 			<p:growl id="growl" showDetail="true" sticky="true" autoUpdate="true" />
 			<p:tabView id="tabs" var="logTable" value="#{logTableTabsBean.tabs}"
-				rendered="#{logTableTabsBean.tabs.size()>0}">
+				widgetVar="tabsWidget" rendered="#{logTableTabsBean.tabs.size()>0}">
 				<p:ajax event="tabClose" listener="#{logTableTabsBean.onTabClose}" />
 
 				<p:tab title="#{logTable.logFile.name}" closable="true">
@@ -146,8 +146,14 @@
 				},50);
 				return true;	
 			}
+			function stopLoading(){
+				$('#form\\:fileLocation').removeAttr('readonly'); 
+				$('#form\\:ajaxWait').hide(); 
+				$('#form\\:openButton').button('enable'); 
+				$('#form\\:closeButton').button('enable');
+				}
 		</script>
-		<p:dialog header="Open local file" widgetVar="localFileDialog"
+		<p:dialog header="Open file" widgetVar="localFileDialog"
 			closable="false" modal="true" resizable="false">
 			<h:panelGroup layout="block">
 				<h:outputLabel value="File location" for="fileLocation"
@@ -158,11 +164,13 @@
 				<h:message for="fileLocation" />
 			</h:panelGroup>
 			<h:panelGroup style="padding-top:20px;" layout="block">
-				<p:commandButton id="openButton" value="Open" ajax="false"
+				<p:commandButton id="openButton" value="Open" ajax="true"
 					widgetVar="openButtonWidget"
-					actionListener="#{fileImportBean.openLocal()}"
-					onclick="return startLoading();"></p:commandButton>
-				<p:button id="closeButton" value="Cancel"
+					action="#{fileImportBean.openLocal()}"
+					onstart="return startLoading();"
+					update="tabsForm"
+					onsuccess="localFileDialog.hide();" oncomplete="stopLoading();"></p:commandButton>
+				<p:commandButton id="closeButton" value="Cancel"
 					widgetVar="closeButtonWidget" onclick="localFileDialog.hide();" />
 				<h:graphicImage value="/images/ajax-loader.gif" id="ajaxWait"
 					style="display:none; padding-left: 20px;" />

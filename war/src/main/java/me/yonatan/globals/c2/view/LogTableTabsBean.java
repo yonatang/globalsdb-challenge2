@@ -32,7 +32,7 @@ public class LogTableTabsBean implements Serializable {
 	@Inject
 	private DbManager dbManager;
 
-	public void addTab(LogTableBean ltb) {
+	public int addTab(LogTableBean ltb) {
 		if (tabSet == null)
 			tabSet = new HashMap<String, LogTableBean>();
 		String key = ltb.getLogFile().getHandler();
@@ -41,6 +41,7 @@ public class LogTableTabsBean implements Serializable {
 		}
 		tabs.add(ltb);
 		tabSet.put(key, ltb);
+		return tabs.size() - 1;
 	}
 
 	public void onTabClose(TabCloseEvent event) {

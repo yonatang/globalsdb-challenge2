@@ -16,6 +16,7 @@ import lombok.Setter;
 import me.yonatan.globals.c2.action.DbManager;
 
 import org.apache.commons.lang3.StringUtils;
+import org.primefaces.context.RequestContext;
 
 @SuppressWarnings("serial")
 @Named
@@ -60,7 +61,10 @@ public class FileImportBean implements Serializable {
 				throw new IllegalStateException("???" + ltb);
 			}
 			ltb.setLogFile(dbManager.getFileInfo(handler));
-			tabs.addTab(ltb);
+			int idx=tabs.addTab(ltb);
+			System.out.println("New tab index is "+idx);
+			RequestContext.getCurrentInstance().execute("tabsWidget.select("+idx+");");
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
