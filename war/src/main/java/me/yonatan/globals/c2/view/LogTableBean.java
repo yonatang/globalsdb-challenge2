@@ -27,7 +27,7 @@ public class LogTableBean implements Serializable {
 	@Inject
 	@Getter
 	private LogTableDataModel dataModel;
-	
+
 	@Getter
 	private LogFile logFile;
 
@@ -36,11 +36,6 @@ public class LogTableBean implements Serializable {
 		dataModel.setHandler(logFile.getHandler());
 		dataModel.setRowCount(dbManager.getLogCountInt(handler));
 		this.logFile = logFile;
-	}
-
-
-
-	public void populate() {
 	}
 
 	@Synchronized
