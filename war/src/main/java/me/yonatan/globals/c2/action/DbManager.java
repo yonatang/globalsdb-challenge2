@@ -38,6 +38,7 @@ public class DbManager {
 	private final Object[] FILE_TIMESTAMP = new Object[] { "file", "timestamp" };
 	private final String LOGS = "logs";
 
+	private int MAX_FILTERED_RESULTS = 5000;
 	@Inject
 	private Logger log;
 
@@ -106,7 +107,6 @@ public class DbManager {
 						nr.set(json, LOGS, id);
 
 						// indices
-						// TODO hanlde missing ip?
 						long timestamp = lr.getTimestamp().getMillis();
 						if (StringUtils.isNotBlank(lr.getIp())) {
 							nr.set(id, "i_ip", "~" + lr.getIp(), id);
@@ -134,6 +134,17 @@ public class DbManager {
 		nr.kill();
 	}
 
+	public LogRecord getRecord(String handler, long id) {
+		@Cleanup
+		NodeReference nr = connection.createNodeReference(handler);
+		if (nr.exists(LOGS, id)) {
+			String json = nr.getString(LOGS, id);
+			LogRecord lr = gson.fromJson(json, LogRecord.class);
+			return lr;
+		}
+		return null;
+	}
+
 	public List<LogRecord> getRecords(String handler) {
 		@Cleanup
 		NodeReference nr = connection.createNodeReference(handler);
@@ -152,24 +163,21 @@ public class DbManager {
 	public Records getRecords(String handler, int from, int count) {
 		@Cleanup
 		NodeReference nr = connection.createNodeReference(handler);
-		String next = nr.nextSubscript(LOGS, "");
+		String next = nr.nextSubscript(LOGS, (from == 0) ? "" : from);
 		ArrayList<LogRecord> recordList = new ArrayList<LogRecord>();
-		int recordCount = 0;
-		while (StringUtils.isNotEmpty(next)) {
-			if (recordCount >= from && recordList.size() < count) {
-				String json = nr.getString(LOGS, next);
-				LogRecord lr = gson.fromJson(json, LogRecord.class);
-				recordList.add(lr);
-			}
+		while (StringUtils.isNotEmpty(next) && recordList.size() < count) {
+			String json = nr.getString(LOGS, next);
+			LogRecord lr = gson.fromJson(json, LogRecord.class);
+			recordList.add(lr);
 			next = nr.nextSubscript(LOGS, next);
-			recordCount++;
 
 		}
 		Records records = new Records();
 		records.setFrom(from);
 		records.setPage(count);
 		records.setRecords(recordList);
-		records.setTotalResults(recordCount);
+
+		records.setTotalResults(nr.getInt(LOGS));
 
 		return records;
 	}
@@ -197,9 +205,9 @@ public class DbManager {
 		}
 		int recordCount = 0;
 		ArrayList<LogRecord> recordList = new ArrayList<LogRecord>();
-		while (StringUtils.isNotEmpty(nextIp) && (nextIp.startsWith(modifiedIp))) {
+		while (StringUtils.isNotEmpty(nextIp) && (nextIp.startsWith(modifiedIp)) && recordCount < MAX_FILTERED_RESULTS) {
 			String nextId = nr.nextSubscript("i_ip", nextIp, "");
-			while (StringUtils.isNotEmpty(nextId)) {
+			while (StringUtils.isNotEmpty(nextId) && recordCount < MAX_FILTERED_RESULTS) {
 				if (recordCount >= from && recordList.size() < count) {
 					String json = nr.getString(LOGS, nextId);
 					LogRecord lr = gson.fromJson(json, LogRecord.class);
@@ -244,9 +252,9 @@ public class DbManager {
 		int recordCount = 0;
 
 		ArrayList<LogRecord> recordList = new ArrayList<LogRecord>();
-		while (StringUtils.isNotEmpty(nextTimestamp) && NumberUtils.toLong(nextTimestamp) < toDate) {
+		while (StringUtils.isNotEmpty(nextTimestamp) && NumberUtils.toLong(nextTimestamp) < toDate && recordCount < MAX_FILTERED_RESULTS) {
 			String nextId = nr.nextSubscript("i_timestamp", nextTimestamp, "");
-			while (StringUtils.isNotEmpty(nextId)) {
+			while (StringUtils.isNotEmpty(nextId) && recordCount < MAX_FILTERED_RESULTS) {
 				if (recordCount >= from && recordList.size() < count) {
 					String json = nr.getString(LOGS, nextId);
 					LogRecord lr = gson.fromJson(json, LogRecord.class);
@@ -293,15 +301,15 @@ public class DbManager {
 		int recordCount = 0;
 
 		ArrayList<LogRecord> recordList = new ArrayList<LogRecord>();
-		while (StringUtils.isNotEmpty(nextTimestamp) && NumberUtils.toLong(nextTimestamp) < toDate) {
+		while (StringUtils.isNotEmpty(nextTimestamp) && NumberUtils.toLong(nextTimestamp) < toDate && recordCount < MAX_FILTERED_RESULTS) {
 			if (nr.hasSubnodes("i_timestamp_ip", nextTimestamp, modifiedIp)) {
 				nextIp = modifiedIp;
 			} else {
 				nextIp = nr.nextSubscript("i_timestamp_ip", nextTimestamp, modifiedIp);
 			}
-			while (StringUtils.isNotEmpty(nextIp) && (nextIp.startsWith(modifiedIp))) {
+			while (StringUtils.isNotEmpty(nextIp) && (nextIp.startsWith(modifiedIp)) && recordCount < MAX_FILTERED_RESULTS) {
 				String nextId = nr.nextSubscript("i_timestamp_ip", nextTimestamp, nextIp, "");
-				while (StringUtils.isNotEmpty(nextId)) {
+				while (StringUtils.isNotEmpty(nextId) && recordCount < MAX_FILTERED_RESULTS) {
 					if (recordCount >= from && recordList.size() < count) {
 						String json = nr.getString(LOGS, nextId);
 						LogRecord lr = gson.fromJson(json, LogRecord.class);

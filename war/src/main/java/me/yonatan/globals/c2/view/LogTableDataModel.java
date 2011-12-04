@@ -13,6 +13,7 @@ import me.yonatan.globals.c2.action.DbManager.Records;
 import me.yonatan.globals.c2.entity.LogRecord;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.primefaces.model.LazyDataModel;
 import org.primefaces.model.SortOrder;
 
@@ -57,6 +58,16 @@ public class LogTableDataModel extends LazyDataModel<LogRecord> {
 		setRowCount(records.getTotalResults());
 		System.out.println("total results " + records.getTotalResults());
 		return records.getRecords();
+	}
+
+	@Override
+	public LogRecord getRowData(String rowKey) {
+		return dbManager.getRecord(handler, NumberUtils.toLong(rowKey, -1));
+	}
+
+	@Override
+	public Object getRowKey(LogRecord object) {
+		return object.getId();
 	}
 
 }
