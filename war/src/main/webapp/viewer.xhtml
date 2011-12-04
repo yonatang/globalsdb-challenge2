@@ -56,16 +56,7 @@
 							actionListener="#{logTable.filterByIp}"
 							icon="ui-icon ui-icon-search" />
 					</p:contextMenu>
-
-					<p:dataTable id="logTable" value="#{logTable.dataModel}"
-						widgetVar="logTableWidget" var="_record" lazy="true" rows="10"
-						selection="#{logTable.selectedRowRecord}" paginator="true"
-						rowKey="#{_record.id}" selectionMode="single"
-						paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink}"
-						rowsPerPageTemplate="10,20,50,100" resizableColumns="true">
-						<p:ajax event="page" listener="#{logTable.onPage}" />
-						<f:facet name="header">
-							<p:outputPanel>
+<p:outputPanel>
 								<h:outputLabel value="From" for="fromDate" />
 								<p:spacer width="10" />
 								<p:calendar id="fromDate"
@@ -97,16 +88,25 @@
 										target="#{logTable.dataModel.toDateFilter}" value="#{null}" />
 								</p:commandButton>
 								<p:spacer width="30" />
-
+		
 								<h:outputLabel value="IP" for="ip" />
 								<p:spacer width="10" />
 								<p:inputText id="ip" value="#{logTable.dataModel.ipFilter}">
-									<p:ajax event="keyup" oncomplete="logTableWidget.filter();" />
+									<p:ajax event="keyup" oncomplete="logTableWidget.filter(); refreshTable();" update="logTable"/>
 								</p:inputText>
 
-								<p:button style="float:right" image="ui-icon ui-icon-refresh" onchange="refreshTable();" title="Refresh"></p:button>
+								<p:commandButton style="float:right" image="ui-icon ui-icon-refresh" onchange="refreshTable(); return false;" title="Refresh" />
 
 							</p:outputPanel>
+					<p:dataTable id="logTable" value="#{logTable.dataModel}"
+						widgetVar="logTableWidget" var="_record" lazy="true" rows="10"
+						selection="#{logTable.selectedRowRecord}" paginator="true"
+						rowKey="#{_record.id}" selectionMode="single"
+						paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink}"
+						rowsPerPageTemplate="10,20,50,100" resizableColumns="true">
+						<p:ajax event="page" listener="#{logTable.onPage}" />
+						<f:facet name="header">
+							
 						</f:facet>
 						<p:column>
 							<f:facet name="header">Id</f:facet>
