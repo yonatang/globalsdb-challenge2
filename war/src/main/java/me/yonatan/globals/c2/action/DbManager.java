@@ -1,7 +1,6 @@
 package me.yonatan.globals.c2.action;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,7 +10,11 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import lombok.AccessLevel;
 import lombok.Cleanup;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import me.yonatan.globals.c2.entity.LogFile;
 import me.yonatan.globals.c2.entity.LogRecord;
 import me.yonatan.globals.c2.parser.LogParser;
@@ -59,27 +62,16 @@ public class DbManager {
 		nr.kill();
 		nr.set(file.getAbsolutePath(), FILE_NAME);
 		nr.set(file.lastModified(), FILE_TIMESTAMP);
+		nr.set(0, LOGS);
+		nr.close();
 
-		@Cleanup
-		FileReader fileReader = new FileReader(file);
-		LineReader lineReader = new LineReader(fileReader);
-
-		String line = null;
-		while ((line = lineReader.readLine()) != null) {
-			long id = nr.increment(1, LOGS);
-			LogRecord lr = logParser.parse(line);
-			lr.setId(id);
-			if (lr != null) {
-				String json = gson.toJson(lr);
-				nr.set(json, LOGS, id);
-			}
-		}
-
+		reloadFile(getFileInfo(handler));
 		return handler;
 
 	}
 
-	public void reloadFile(LogFile logFile) throws IOException {
+	public void reloadFile(LogFile logFile) {
+		System.out.println("Loading file " + logFile);
 		File file = logFile.getFile();
 		// TODO
 		if (file == null)
@@ -88,37 +80,53 @@ public class DbManager {
 		@Cleanup
 		NodeReference nr = connection.createNodeReference(logFile.getHandler());
 
-		@Cleanup
-		FileReader fileReader = new FileReader(file);
-		LineReader lineReader = new LineReader(fileReader);
+		try {
+			connection.startTransaction();
+			nr.acquireLock(NodeReference.EXCLUSIVE_LOCK, NodeReference.LOCK_NON_INCREMENTALLY);
+			nr.releaseLock(NodeReference.EXCLUSIVE_LOCK, NodeReference.RELEASE_AT_TRANSACTION_END);
+			@Cleanup
+			FileReader fileReader = new FileReader(file);
+			LineReader lineReader = new LineReader(fileReader);
 
-		String lastJson = nr.getString(LOGS, nr.getLong(LOGS));
-		LogRecord lastRecord = gson.fromJson(lastJson, LogRecord.class);
-		boolean updated = false;
+			String lastJson = nr.getString(LOGS, nr.getLong(LOGS));
+			LogRecord lastRecord = gson.fromJson(lastJson, LogRecord.class);
+			boolean updated = false;
 
-		String line = null;
-		while ((line = lineReader.readLine()) != null) {
-			LogRecord lr = logParser.parse(line);
-			if (updated || lr.getTimestamp().isAfter(lastRecord.getTimestamp())) {
-				long id = nr.increment(1, LOGS);
-				lr.setId(id);
-				if (lr != null) {
-					String json = gson.toJson(lr);
-					nr.set(json, LOGS, id);
+			String line = null;
+			while ((line = lineReader.readLine()) != null) {
+				LogRecord lr = logParser.parse(line);
+				if (lr == null)
+					continue;
+				if (updated || lastRecord == null || lr.getTimestamp().isAfter(lastRecord.getTimestamp())) {
+					long id = nr.increment(1, LOGS);
+					lr.setId(id);
+					if (lr != null) {
+						String json = gson.toJson(lr);
+						nr.set(json, LOGS, id);
+
+						// index by ip
+						// TODO hanlde missing ip?
+						if (StringUtils.isNotBlank(lr.getIp())) {
+							nr.set(id, "i_ip", "~" + lr.getIp(), id);
+						}
+					}
+					updated = true;
 				}
-				updated = true;
 			}
+			nr.set(file.lastModified(), FILE_TIMESTAMP);
+
+			connection.commit();
+			System.out.println("Updated!");
+		} catch (Exception e) {
+			log.errorv(e, "Can't load data");
+			connection.rollback();
 		}
-		nr.set(file.lastModified(), FILE_TIMESTAMP);
-		System.out.println("Updated!");
 
 	}
 
 	public List<LogRecord> getRecords(String handler) {
 		@Cleanup
 		NodeReference nr = connection.createNodeReference(handler);
-		System.out.println("Loading data for file " + nr.getString(FILE_NAME));
-		System.out.println("Last updated at " + new DateTime(nr.getLong(FILE_TIMESTAMP)));
 		String next = nr.nextSubscript(LOGS, "");
 		ArrayList<LogRecord> records = new ArrayList<LogRecord>();
 		while (StringUtils.isNotEmpty(next)) {
@@ -131,10 +139,91 @@ public class DbManager {
 		return records;
 	}
 
+	public Records getRecords(String handler, int from, int count) {
+		@Cleanup
+		NodeReference nr = connection.createNodeReference(handler);
+		String next = nr.nextSubscript(LOGS, "");
+		ArrayList<LogRecord> recordList = new ArrayList<LogRecord>();
+		int recordCount = 0;
+		while (StringUtils.isNotEmpty(next)) {
+			if (recordCount >= from && recordList.size() < count) {
+				String json = nr.getString(LOGS, next);
+				LogRecord lr = gson.fromJson(json, LogRecord.class);
+				recordList.add(lr);
+			}
+			next = nr.nextSubscript(LOGS, next);
+			recordCount++;
+
+		}
+		Records records = new Records();
+		records.setFrom(from);
+		records.setPage(count);
+		records.setRecords(recordList);
+		records.setTotalResults(recordCount);
+
+		return records;
+	}
+
+	public Records getRecords(String handler, int from, int count, String ip) {
+
+		@Cleanup
+		NodeReference nr = connection.createNodeReference(handler);
+		String modifiedIp = "~" + ip;
+		String nextIp = null;
+		
+		if (nr.hasSubnodes("i_ip", modifiedIp)) {
+			nextIp = modifiedIp;
+		} else {
+			nextIp = nr.nextSubscript("i_ip", modifiedIp);
+		}
+		int recordCount = 0;
+		ArrayList<LogRecord> recordList = new ArrayList<LogRecord>();
+		while (StringUtils.isNotEmpty(nextIp) && (nextIp.startsWith(modifiedIp))) {
+			String nextId = nr.nextSubscript("i_ip", nextIp, "");
+			while (StringUtils.isNotEmpty(nextId)) {
+				if (recordCount >= from && recordList.size() < count) {
+					String json = nr.getString(LOGS, nextId);
+					LogRecord lr = gson.fromJson(json, LogRecord.class);
+					recordList.add(lr);
+				}
+				recordCount++;
+				nextId = nr.nextSubscript("i_ip", nextIp, nextId);
+			}
+			nextIp = nr.nextSubscript("i_ip", nextIp);
+		}
+
+		Records records = new Records();
+		records.setFrom(from);
+		records.setPage(count);
+		records.setRecords(recordList);
+		records.setTotalResults(recordCount);
+		return records;
+
+	}
+
+	public long getLogCount(String handler) {
+		@Cleanup
+		NodeReference nr = connection.createNodeReference(handler);
+		return nr.getLong(LOGS);
+	}
+
+	public int getLogCountInt(String handler) {
+		return (int) (Math.min(getLogCount(handler), Integer.MAX_VALUE));
+	}
+
 	public LogFile getFileInfo(String handler) {
 		@Cleanup
 		NodeReference nr = connection.createNodeReference(handler);
-
 		return new LogFile(nr.getString(FILE_NAME), new DateTime(nr.getLong(FILE_TIMESTAMP)), handler);
+	}
+
+	@Getter
+	@Setter(AccessLevel.PRIVATE)
+	@ToString
+	public class Records {
+		private int from;
+		private int page;
+		private int totalResults;
+		private List<LogRecord> records;
 	}
 }

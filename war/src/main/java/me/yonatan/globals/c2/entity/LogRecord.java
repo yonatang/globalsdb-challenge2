@@ -15,8 +15,6 @@ public class LogRecord implements Serializable {
 
 	private DateTime timestamp;
 
-	private String level;
-
 	private String ip;
 
 	private String description;

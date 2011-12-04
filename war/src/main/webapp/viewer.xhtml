@@ -12,7 +12,7 @@
 <h:head>
 </h:head>
 <h:body>
-	<h:form>
+	<h:form id="form">
 		<p:menubar>
 			<p:submenu label="File">
 				<p:submenu label="Open...">
@@ -25,56 +25,52 @@
 			</p:submenu>
 		</p:menubar>
 
-		<p:commandButton value="Populate" action="#{logTableBean.populate()}"
-			update="logTable,output" />
+		<p:panel id="mainPanel">
+			<p:tabView id="tabs" var="logTable" value="#{logTableTabsBean.tabs}"
+				rendered="#{logTableTabsBean.tabs.size()>0}">
+				<p:ajax event="tabClose" listener="#{logTableTabsBean.onTabClose}" />
+				<p:tab title="#{logTable.logFile.name}" closable="true">
+					<p:poll async="true" listener="#{logTable.pollForChanges}" interval="10" ></p:poll>
+					<p:dataTable id="logTable" value="#{logTable.dataModel}"
+						var="_record" lazy="true" rows="10" paginator="true"
+						paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink}"
+						rowsPerPageTemplate="10,20,50,100" resizableColumns="true">
+						<p:column >
+							<f:facet name="header">Id</f:facet>
+							<h:outputText value="#{_record.id}" />
+						</p:column>
+						<p:column>
+							<f:facet name="header">Timestamp</f:facet>
+							<h:outputText value="#{_record.timestamp}" />
+						</p:column>
+						<p:column filterBy="#{_record.ip}">
+							<f:facet name="header">IP</f:facet>
+							<h:outputText value="#{_record.ip}" />
+						</p:column>
+						<p:column style="width:100%">
+							<f:facet name="header">Description</f:facet>
+							<h:outputText value="#{_record.description}" />
+						</p:column>
+					</p:dataTable>
+				</p:tab>
 
-		<p:tabView id="tabs" var="logTable" value="#{logTableTabsBean.tabs}">
-			<p:ajax event="tabClose" listener="#{logTableTabsBean.onTabClose}" />
-			<p:tab title="#{logTable.logFile.name}" closable="true">
-				<p:poll async="true" listener="#{logTable.pollForChanges}"></p:poll>
-				<p:dataTable id="logTable" value="#{logTable.records}" var="_record">
-					<p:column>
-						<f:facet name="header">
-					Id
-				</f:facet>
-						<h:outputText value="#{_record.id}" />
-					</p:column>
-					<p:column>
-						<f:facet name="header">
-					Timestamp
-				</f:facet>
-						<h:outputText value="#{_record.timestamp}" />
-					</p:column>
-					<p:column>
-						<f:facet name="header">
-					Level
-				</f:facet>
-						<h:outputText value="#{_record.level}" />
-					</p:column>
-					<p:column>
-						<f:facet name="header">
-					IP
-				</f:facet>
-						<h:outputText value="#{_record.ip}" />
-					</p:column>
-					<p:column>
-						<f:facet name="header">
-					Description
-				</f:facet>
-						<h:outputText value="#{_record.description}" />
-					</p:column>
-				</p:dataTable>
-
-			</p:tab>
-
-		</p:tabView>
+			</p:tabView>
+		</p:panel>
 
 		<p:dialog header="Open local file" widgetVar="localFileDialog"
-			modal="true">
+			closable="false" modal="true">
 			<h:outputText value="File location" />
 			<p:inputText value="#{fileImportBean.localFileLocation}" />
-			<p:commandButton value="Open" action="#{fileImportBean.openLocal()}"
-				onsuccess="localFileDialog.hide();" update="tabs" />
+			<p:commandButton id="openButton" value="Open"
+				action="#{fileImportBean.openLocal()}"
+				onstart="$('#form\\:ajaxWait').show(); $('#form\\:openButton').button('disable'); $('#form\\:closeButton').button('disable');"
+				onsuccess="$('#form\\:ajaxWait').hide(); localFileDialog.hide();"
+				oncomplete="$('#form\\:openButton').button('enable'); $('#form\\:closeButton').button('enable');"
+				update="mainPanel" />
+			<p:button id="closeButton" value="Cancel"
+				onclick="localFileDialog.hide();" />
+			<h:outputText value="Loging. Please wait." id="ajaxWait"
+				style="display:none;" />
 		</p:dialog>
 
 	</h:form>

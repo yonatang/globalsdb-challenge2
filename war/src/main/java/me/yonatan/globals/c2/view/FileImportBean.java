@@ -46,9 +46,6 @@ public class FileImportBean implements Serializable {
 			return; // TODO
 		}
 
-		// TODO - open the file
-		// TODO - load objects
-		// TODO - create a new tab for view, and populate it with data
 		System.out.println("Loading file " + logTableBeanCreator);
 		try {
 			String handler = dbManager.importLocalFile(file);
@@ -57,12 +54,11 @@ public class FileImportBean implements Serializable {
 				throw new IllegalStateException("???" + ltb);
 			}
 			ltb.setLogFile(dbManager.getFileInfo(handler));
-			ltb.populate();
 			tabs.addTab(ltb);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	
+
 }

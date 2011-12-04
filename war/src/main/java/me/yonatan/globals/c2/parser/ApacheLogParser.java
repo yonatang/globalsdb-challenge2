@@ -28,11 +28,9 @@ public class ApacheLogParser implements LogParser {
 			String rest = parts[1];
 			String time = StringUtils.substring(rest, StringUtils.indexOf(rest, "[") + 1, StringUtils.indexOf(rest, "]"));
 			String description = StringUtils.substring(rest, StringUtils.indexOf(rest, "]") + 2);
-			String level = "INFO";
 			LogRecord logRecord = new LogRecord();
 			logRecord.setDescription(description);
 			logRecord.setIp(ip);
-			logRecord.setLevel(level);
 			logRecord.setTimestamp(DateTime.parse(time, dateTimeFormatter));
 			return logRecord;
 		} catch (Exception e) {

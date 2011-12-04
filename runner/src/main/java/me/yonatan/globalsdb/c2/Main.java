@@ -80,7 +80,7 @@ public class Main {
 			NativeInterface.open();
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
-					JFrame frame = new JFrame("DJ Native Swing Test");
+					JFrame frame = new JFrame("Logfile viewer");
 					frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 					frame.getContentPane().add(new Window("http://localhost:"+port+"/app/viewer.jsf"), BorderLayout.CENTER);
 					frame.setSize(800, 600);
