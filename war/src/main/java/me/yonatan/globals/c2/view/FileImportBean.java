@@ -6,6 +6,8 @@ import java.io.Serializable;
 
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Instance;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -37,11 +39,15 @@ public class FileImportBean implements Serializable {
 		System.out.println("Using file "+localFileLocation);
 		if (StringUtils.isBlank(localFileLocation)) {
 			System.out.println("Missing file!!");
+			FacesContext context = FacesContext.getCurrentInstance();
+			context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "File error", "File is required."));
 			return; // TODO
 		}
 
 		File file = new File(localFileLocation);
 		if (!file.isFile()) {
+			FacesContext context = FacesContext.getCurrentInstance();
+			context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "File error", "File "+localFileLocation+" not found."));
 			System.out.println("File not exists!!");
 			return; // TODO
 		}

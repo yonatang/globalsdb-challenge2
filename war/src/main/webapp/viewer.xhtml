@@ -44,7 +44,7 @@
 				<p:tab title="#{logTable.logFile.name}" closable="true">
 					<p:remoteCommand name="refreshTable" update="logTable"></p:remoteCommand>
 					<p:poll async="true" listener="#{logTable.pollForChanges}"
-						interval="2" oncomplete="handlePollComplete(xhr, status, args)"></p:poll>
+						interval="10" oncomplete="handlePollComplete(xhr, status, args)"></p:poll>
 
 					<p:hotkey bind="right"
 						handler="$(logTableWidget.getPaginator().nextLink[0]).click();"></p:hotkey>
@@ -170,6 +170,7 @@
 		modal="true" header="Help">
 		<li>Right click on item to filter by that IP</li>
 		<li>Use right or left keyboard keys to jump between pages</li>
+		<li>Log will autorefresh when on the last page of the table</li>
 
 
 	</p:dialog>
