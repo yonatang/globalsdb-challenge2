@@ -28,13 +28,13 @@ public class FileImportBean implements Serializable {
 
 	@Getter
 	@Setter
-	// TODO - remove it
-	private String localFileLocation;// = "C:/tmp/log.log";
+	private String localFileLocation;
 
 	@Inject
 	private Instance<LogTableBean> logTableBeanCreator;
 
 	public void openLocal() {
+		System.out.println("Using file "+localFileLocation);
 		if (StringUtils.isBlank(localFileLocation)) {
 			System.out.println("Missing file!!");
 			return; // TODO

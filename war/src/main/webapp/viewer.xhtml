@@ -28,14 +28,20 @@
 	</h:form>
 	<h:form id="tabsForm">
 		<p:panel id="mainPanel">
+
 			<p:tabView id="tabs" var="logTable" value="#{logTableTabsBean.tabs}"
 				rendered="#{logTableTabsBean.tabs.size()>0}">
 				<p:ajax event="tabClose" listener="#{logTableTabsBean.onTabClose}" />
 				<p:tab title="#{logTable.logFile.name}" closable="true">
 					<p:poll async="true" listener="#{logTable.pollForChanges}"
 						interval="10"></p:poll>
+					<p:hotkey bind="right"
+						handler="$(logTableWidget.getPaginator().nextLink[0]).click();"></p:hotkey>
+					<p:hotkey bind="left"
+						handler="$(logTableWidget.getPaginator().prevLink[0]).click();"></p:hotkey>
 					<p:dataTable id="logTable" value="#{logTable.dataModel}"
-						var="_record" lazy="true" rows="10" paginator="true"
+						widgetVar="logTableWidget" var="_record" lazy="true" rows="10"
+						paginator="true"
 						paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink}"
 						rowsPerPageTemplate="10,20,50,100" resizableColumns="true">
 						<p:column>
@@ -62,23 +68,34 @@
 	</h:form>
 
 	<h:form id="form">
+		<script type="text/javascript">
+			function startLoading(){
+				setTimeout(function(){
+					$('#form\\:fileLocation').attr('readonly',true); 
+					$('#form\\:ajaxWait').show(); 
+					$('#form\\:openButton').button('disable'); 
+					$('#form\\:closeButton').button('disable'); 
+				},50);
+				return true;	
+			}
+		</script>
 		<p:dialog header="Open local file" widgetVar="localFileDialog"
 			closable="false" modal="true" resizable="false">
 			<h:panelGroup layout="block">
 				<h:outputLabel value="File location" for="fileLocation"
 					style="padding-right:10px;" />
 				<p:inputText id="fileLocation"
-					value="#{fileImportBean.localFileLocation}" style="width:300px;" />
+					value="#{fileImportBean.localFileLocation}" style="width:300px;" widgetVar="fileLocationWidget"
+					required="true" />
+				<h:message for="fileLocation" />
 			</h:panelGroup>
 			<h:panelGroup style="padding-top:20px;" layout="block">
-				<p:commandButton id="openButton" value="Open"
-					action="#{fileImportBean.openLocal()}"
-					onstart="$('#form\\:fileLocation').attr('disabled',true); $('#form\\:ajaxWait').show(); $('#form\\:openButton').button('disable'); $('#form\\:closeButton').button('disable');"
-					onsuccess="$('#form\\:ajaxWait').hide(); localFileDialog.hide();"
-					oncomplete="$('#form\\:fileLocation').removeAttr('disabled'); $('#form\\:openButton').button('enable'); $('#form\\:closeButton').button('enable');"
-					update="mainPanel">
-				</p:commandButton>
-				<p:button id="closeButton" value="Cancel"
+				<p:commandButton id="openButton" value="Open" 
+					ajax="false" widgetVar="openButtonWidget"
+					actionListener="#{fileImportBean.openLocal()}"
+						onclick="return startLoading();"
+				></p:commandButton>
+				<p:button id="closeButton" value="Cancel" widgetVar="closeButtonWidget"
 					onclick="localFileDialog.hide();" />
 				<h:graphicImage value="/images/ajax-loader.gif" id="ajaxWait"
 					style="display:none; padding-left: 20px;" />
